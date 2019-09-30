@@ -35,7 +35,7 @@ def staff():
         response = app.response_class(
             response=json.dumps(
                 list(ad_data.find(projection={"_id": 0}).sort(
-                    "list_time", -1).limit(9))),
+                    "list_time", -1).limit(9)),ensure_ascii=False),
             status=200,
             mimetype='application/json'
         )
