@@ -32,10 +32,19 @@ def staff():
     #     return "test"
 
     if request.method == 'GET':
+        offset = request.args.get("o")
+        limit = request.args.get("limit")
+        if not offset:
+            offset = 0
+        if not limit or int(limit)>20:
+            limit = 20
         response = app.response_class(
             response=json.dumps(
-                list(ad_data.find(projection={"_id": 0}).sort(
-                    "list_time", -1).limit(9)),ensure_ascii=False),
+                {"total": ad_data.estimated_document_count(), 
+                "offset": int(offset), 
+                "limit": int(limit),
+                "data": list(ad_data.find(projection={"_id": 0}).sort(
+                    "list_time", -1).skip(int(offset)).limit(int(limit)))}, ensure_ascii=False).replace("NaN", "\"null\""),
             status=200,
             mimetype='application/json'
         )
