@@ -33,11 +33,6 @@ def convert_vector(temp_matrix):
     return processing_data
 
 
-csvSchedulePath = './data/schedule.csv'
-csvStaffPath = './data/staff.csv'
-arr = []
-
-
 client = MongoClient(
     "mongodb+srv://suat:tran1997179@mydb-fkhoo.mongodb.net/test?retryWrites=true&w=majority")
 db = client.myDB
@@ -55,18 +50,20 @@ def index():
 @app.route('/ad-listing', methods=['GET', 'POST', 'DELETE'])
 def ad_listing():
     if request.method == 'GET':
+        area = request.args.get('area')
         offset = request.args.get("o")
         limit = request.args.get("limit")
+        print(area)
         if not offset:
             offset = 0
         if not limit or int(limit) > 24:
             limit = 24
         response = app.response_class(
             response=json.dumps(
-                {"total": ad_data.estimated_document_count(),
+                {"total": ad_data.count_documents({"area": int(area)}) if area else ad_data.estimated_document_count(),
                  "offset": int(offset),
                  "limit": int(limit),
-                 "data": list(ad_data.find(projection={"_id": 0}).sort(
+                 "data": list(ad_data.find({"area": int(area)} if area else {}, projection={"_id": 0}).sort(
                      "list_time", -1).skip(int(offset)).limit(int(limit)))}, ensure_ascii=False).replace("NaN", "\"null\""),
             status=200,
             mimetype='application/json'
