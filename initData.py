@@ -9,6 +9,8 @@ csv = pd.read_csv(csvPath)
 data = csv.to_dict('records')
 for i in data:
     i.pop("Unnamed: 0")
+    i.pop("Unnamed: 0.1")
+    i.pop("Unnamed: 0.1.1")
 
 
 client = pymongo.MongoClient(
@@ -18,9 +20,3 @@ db = client.myDB
 ad_data = db["ad_data"]
 # ad_data.delete_many({})
 # ad_data.insert_many(data)
-
-
-# # Renew data.
-# staff.delete_many({})
-# # staff.create_index("staff_id")
-# staff.insert_many(staffData)
