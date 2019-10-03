@@ -94,19 +94,15 @@ def ad_recommend(list_id):
                                   'list_id']][properties_ads["list_id"] == int(list_id)]
     processing_data = convert_vector(temp_matrix)
     distance, [indices] = loaded_model.kneighbors(processing_data)
-    return_data = properties_ads.loc(i for i in indices[1:6])
-    print(return_data)
+    return_data = properties_ads.loc[indices[1:6]]
 
-    # response = app.response_class(
-    #     response=json.dumps(
-    #         {"total": ad_data.estimated_document_count(),
-    #          "data": list(ad_data.find(projection={"_id": 0}).sort(
-    #              "list_time", -1).skip(10).limit(5))}, ensure_ascii=False).replace("NaN", "\"null\""),
-    #     status=200,
-    #     mimetype='application/json'
-    # )
-    # return response
-    return "hello"
+    response = app.response_class(
+        response=json.dumps(
+            {"data": list(return_data.to_dict("records"))}, ensure_ascii=False).replace("NaN", "\"null\""),
+        status=200,
+        mimetype='application/json'
+    )
+    return response
 
 
 if __name__ == '__main__':
