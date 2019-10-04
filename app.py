@@ -53,11 +53,26 @@ def ad_listing():
         area = request.args.get('area')
         offset = request.args.get("o")
         limit = request.args.get("limit")
-        print(area)
+        q = request.args.get('q')
         if not offset:
             offset = 0
         if not limit or int(limit) > 24:
             limit = 24
+
+        if q:
+            query_string = "\""+ q + "\""
+            print(query_string)
+            data = ad_data.find(
+                {"$text": {"$search": query_string}}, projection={"_id": 0})
+            return app.response_class(
+                response=json.dumps(
+                    {"total": data.count(),
+                     "offset": int(offset),
+                     "limit": int(limit),
+                     "data": list(data.skip(int(offset)).limit(int(limit)))}, ensure_ascii=False).replace("NaN", "\"null\""),
+                status=200,
+                mimetype='application/json'
+            )
         response = app.response_class(
             response=json.dumps(
                 {"total": ad_data.count_documents({"area": int(area)}) if area else ad_data.estimated_document_count(),
