@@ -4,12 +4,14 @@ import requests
 from flask import Flask, redirect, url_for, request
 from flask_cors import CORS
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 import pandas as pd
 import numpy as np
 import joblib
 from sklearn.preprocessing import Normalizer
 normalizer = Normalizer()
+
 
 properties_ads = pd.read_csv('./data/last_hope.csv')
 loaded_model = joblib.load('./data/recommendation.pkl')
@@ -37,7 +39,7 @@ client = MongoClient(
     "mongodb+srv://suat:tran1997179@mydb-fkhoo.mongodb.net/test?retryWrites=true&w=majority")
 db = client.myDB
 ad_data = db["ad_data"]
-
+user = db.user
 app = Flask(__name__)
 CORS(app)
 
@@ -60,7 +62,7 @@ def ad_listing():
             limit = 24
 
         if q:
-            query_string = "\""+ q + "\""
+            query_string = "\"" + q + "\""
             print(query_string)
             data = ad_data.find(
                 {"$text": {"$search": query_string}}, projection={"_id": 0})
@@ -90,6 +92,18 @@ def ad_listing():
 def ad_detail(list_id):
     data = requests.get(
         "https://gateway.chotot.com/v1/public/ad-listing/"+list_id).json()
+    query = {'_id': ObjectId(request.headers.get('Authentication'))}
+    user_data = user.find_one(query)
+    old_price = user_data.get("price", 0)
+    old_rooms = user_data.get("rooms", 0)
+    old_size = user_data.get("size", 0)
+    old_toilets = user_data.get("toilets", 0)
+    new_price = old_price*0.2+ data['ad'].get("price", 0)*0.8
+    new_rooms = old_rooms*0.1 + data['ad'].get("rooms", 0)*0.9
+    new_size = old_size*0.1 + data['ad'].get("size", 0)*0.9
+    new_toilets = old_toilets*0.1 + data['ad'].get("toilets", 0)*0.9
+    user.update_one(query, {"$set": {"area_name": data["ad"]["area_name"], "ward_name": data["ad"]["ward_name"],
+                                     "category_name": data["ad"]["category_name"], "price": new_price, "rooms": new_rooms, "size": new_size, "toilets": new_toilets}})
     response = app.response_class(
         response=json.dumps(data, ensure_ascii=False).replace(
             "NaN", "\"null\""),
